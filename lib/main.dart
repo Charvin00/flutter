@@ -1,22 +1,11 @@
 import 'package:flutter/material.dart';
-//import 'package:english_words/english_words.dart';
+import 'post.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'Record.dart';
 
 void main() => runApp(MyApp());
 
 
-
-class Post {
-  String title;
-  int price;
-  String description;
-
-//   constructor
-   Post (String title, int price, String description ) {
-     this.title = title;
-     this.price = price;
-     this.description = description;
-   }
-}
 
 class MyApp extends StatelessWidget {
   @override
@@ -39,10 +28,8 @@ class BrowsePost extends StatefulWidget {
 
 class _BrowsePostState extends State<BrowsePost> {
 
-  Choice _selectedChoice = choices[0]; // The app's "state".
-   List<Post> _suggestions = new List<Post>();
+  Choice _selectedChoice = choices[0]; //  The app's "state".
 
-  final Set<Post> _saved = new Set<Post>();
   final TextStyle _biggerFont = const TextStyle(fontSize:18.0);
 
   void _select(Choice choice) {
@@ -96,52 +83,53 @@ class _BrowsePostState extends State<BrowsePost> {
               ),
             ],
           ),
-          body: _buildSuggestions(),
+          body: _buildBody(context),
         )
     );
   }
-  Widget _buildSuggestions() {
-    return new ListView.builder(
-        padding: const EdgeInsets.all(16.0),
-        itemBuilder: (BuildContext _context, int i) {
-          Post dummy1 = new Post('bike', 100, 'brand new');
-          Post dummy2 = new Post('Drone', 500, 'good condition');
-          Post dummy3 = new Post('boat', 2000, 'regular used');
-          
-          _suggestions.add(dummy1);
-          _suggestions.add(dummy2);
-          _suggestions.add(dummy3);
 
-          print(_suggestions.length);
+  Widget _buildBody(BuildContext context) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: Firestore.instance.collection('baby').snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return LinearProgressIndicator();
 
-          final int index = i ~/ (1);
-
-          return _buildRow(_suggestions[i]);
-
-        }
+        return _buildList(context, snapshot.data.documents);
+      },
+    );
+  }
+  Widget _buildList(BuildContext context, List<DocumentSnapshot> snapshot) {
+    return ListView(
+      padding: const EdgeInsets.only(top: 20.0),
+      children: snapshot.map((data) => _buildListItem(context, data)).toList(),
     );
   }
 
-  Widget _buildRow(Post pair) {
-    final bool alreadySaved = _saved.contains(pair);
-    return new ListTile(
-      title: new Text(
-        pair.title,
-        style: _biggerFont,
+  Widget _buildListItem(BuildContext context, DocumentSnapshot data) {
+    final record = Record.fromSnapshot(data);
+
+    return Padding(
+      key: ValueKey(record.title),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey),
+          borderRadius: BorderRadius.circular(5.0),
+        ),
+        child: ListTile(
+          title: Text(record.title),
+          trailing: Text('\$ ' + record.votes.toString() ),
+
+//            onTap to be the Post page
+//          onTap: () => Firestore.instance.runTransaction((transaction) async {
+//            final freshSnapshot = await transaction.get(record.reference);
+//            final fresh = Record.fromSnapshot(freshSnapshot);
+//
+//            await transaction
+//                .update(record.reference, {'price': fresh.votes + 1});
+//          }),
+        ),
       ),
-      trailing: new Icon(
-        alreadySaved ? Icons.favorite: Icons.favorite_border,
-        color: alreadySaved ? Colors.red : null,
-      ),
-      onTap: () {
-        setState(() {
-          if (alreadySaved) {
-            _saved.remove(pair);
-          }else {
-            _saved.add(pair);
-          }
-        });
-      },
     );
   }
 }
@@ -255,7 +243,7 @@ class ChoiceCard extends StatelessWidget {
 
 const List<Choice> choices = const <Choice>[
   const Choice(title: 'Browse', icon: Icons.explore),
-  const Choice(title: 'Post', icon: Icons.launch),
+  const Choice(title: 'Post', icon: Icons.add),
   const Choice(title: 'Home', icon: Icons.home),
   const Choice(title: 'Setting', icon: Icons.settings),
   const Choice(title: 'Cancel', icon: Icons.clear),
