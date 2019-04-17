@@ -166,23 +166,38 @@ Future<bool> dialogError(BuildContext context) async {
           return new ListTile(
             title: Text(cars.documents[i].data['title']),
             subtitle: Text('\$' + cars.documents[i].data['price'].toString()),
-            onTap: () {
-              addDialog(context);
-                  // Navigator.of(context).pop();
-                  // crudObj.addData({
-                  //   'title': this.carModel,
-                  //   'details': this.carColor
-                  // }).then((result) {
-                  //   dialogTrigger(context);
-                  // }).catchError((e) {
-                  //   print(e);
-                  // });
-                }
+            onTap: () => showDetails(context, cars.documents[i]),
           );
         },
       );
     } else {
       return Text('Loading, Please wait..');
     }
+  }
+
+    Future<bool> showDetails(BuildContext context, DocumentSnapshot documents) async {
+    return showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text(documents.data['title'], style: TextStyle(fontSize: 15.0)),
+            content: Column(
+              children: <Widget>[
+                Text(documents.data['price'].toString()),
+                Text(documents.data['details'])
+              ],
+            ),
+            actions: <Widget>[
+              FlatButton(
+                child: Text('back'),
+                textColor: Colors.blue,
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              )
+            ],
+          );
+        });
   }
 }
