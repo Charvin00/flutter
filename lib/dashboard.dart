@@ -8,6 +8,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'services/crud.dart';
 
+import 'package:page_view_indicators/circle_page_indicator.dart';
+
 class DashboardPage extends StatefulWidget {
   @override
   _DashboardPageState createState() => _DashboardPageState();
@@ -164,25 +166,88 @@ Future<bool> dialogError(BuildContext context) async {
         padding: EdgeInsets.all(5.0),
         itemBuilder: (context, i) {
           return new ListTile(
+              leading:SizedBox(
+                height: 50.0,
+                width: 50.0,
+                child: new Image.network(cars.documents[i].data['pictures'][0]),
+              ),
             title: Text(cars.documents[i].data['title']),
             subtitle: Text('\$' + cars.documents[i].data['price'].toString()),
-            onTap: () {
-              addDialog(context);
-                  // Navigator.of(context).pop();
-                  // crudObj.addData({
-                  //   'title': this.carModel,
-                  //   'details': this.carColor
-                  // }).then((result) {
-                  //   dialogTrigger(context);
-                  // }).catchError((e) {
-                  //   print(e);
-                  // });
-                }
+            onTap: () => showDetails(context, cars.documents[i]),
           );
         },
       );
     } else {
       return Text('Loading, Please wait..');
     }
+  }
+
+    Future<bool> showDetails(BuildContext context, DocumentSnapshot documents) async {
+      final _items = documents.data['pictures'];
+      final _currentPageNotifier = ValueNotifier<int>(0);
+      final _pageController = PageController();
+
+       _buildPageView() {
+          return Container(
+            height: 300.0, // Change as per your requirement
+            width: 300.0, // Change as per your requirement
+            child: PageView.builder(
+              itemCount: _items.length,
+              controller: _pageController,
+              itemBuilder: (BuildContext context, int index) {
+                return Center(
+                  child: Image.network(_items[index]),
+                );
+              },
+              onPageChanged: (int index) {
+                _currentPageNotifier.value = index;
+              },
+            ),
+          );
+        }
+      _buildCircleIndicator() {
+        return Positioned(
+          left: 0.0,
+          right: 0.0,
+          bottom: 0.0,
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: CirclePageIndicator(
+              itemCount: _items.length,
+              currentPageNotifier: _currentPageNotifier,
+            ),
+          ),
+        );
+      }
+
+    return showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text(documents.data['title'], style: TextStyle(fontSize: 15.0)),
+            content: Column(
+              children: <Widget>[
+                Stack(
+                  children: <Widget>[
+                    _buildPageView(),
+                    _buildCircleIndicator(),
+                  ],
+                ),
+                Text(documents.data['price'].toString()),
+                Text(documents.data['details'])
+              ],
+            ),
+            actions: <Widget>[
+              FlatButton(
+                child: Text('back'),
+                textColor: Colors.blue,
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              )
+            ],
+          );
+        });
   }
 }
