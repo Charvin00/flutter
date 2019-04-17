@@ -53,7 +53,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   Navigator.of(context).pop();
                   crudObj.addData({
                     'title': this.carModel,
-                    'details': this.carColor
+                    'price': this.carColor
                   }).then((result) {
                     dialogTrigger(context);
                   }).catchError((e) {
@@ -132,7 +132,8 @@ class _DashboardPageState extends State<DashboardPage> {
         itemBuilder: (context, i) {
           return new ListTile(
             title: Text(cars.documents[i].data['title']),
-            subtitle: Text(cars.documents[i].data['details']),
+            subtitle: Text('\$' +cars.documents[i].data['price'].toString()),
+            onTap: () => showDetails(context, cars.documents[i]),
           );
         },
       );
@@ -140,4 +141,32 @@ class _DashboardPageState extends State<DashboardPage> {
       return Text('Loading, Please wait..');
     }
   }
+
+  Future<bool> showDetails(BuildContext context, DocumentSnapshot documents) async {
+    return showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text(documents.data['title'], style: TextStyle(fontSize: 15.0)),
+            content: Column(
+              children: <Widget>[
+                Text(documents.data['price'].toString()),
+                Text(documents.data['details'])
+              ],
+            ),
+            actions: <Widget>[
+              FlatButton(
+                child: Text('back'),
+                textColor: Colors.blue,
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              )
+            ],
+          );
+        });
+  }
+
+  
 }

@@ -28,7 +28,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return new Scaffold(
       appBar: new AppBar(
-        title: new Text('Crud sample'),
+        title: new Text('Hyper Garage Sale'),
         backgroundColor: Colors.blue,
         centerTitle: true,
       ),
