@@ -51,14 +51,47 @@ class _DashboardPageState extends State<DashboardPage> {
                 textColor: Colors.blue,
                 onPressed: () {
                   Navigator.of(context).pop();
-                  crudObj.addData({
+                  if(this.carColor != null || this.carModel != null) {
+                    crudObj.addData({
                     'title': this.carModel,
-                    'details': this.carColor
-                  }).then((result) {
-                    dialogTrigger(context);
-                  }).catchError((e) {
-                    print(e);
-                  });
+                    'price': this.carColor
+                    }).then((result) {
+                      dialogTrigger(context);
+                    }).catchError((e) {
+                      print(e);
+                    });
+                  } else {
+                      dialogError(context);
+                  }
+                  
+                },
+              ),
+              FlatButton(
+                child: Text('Cancel'),
+                textColor: Colors.red,
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  
+                },
+              ),
+            ],
+          );
+        });
+  }
+Future<bool> dialogError(BuildContext context) async {
+    return showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('Ehhooo', style: TextStyle(fontSize: 15.0)),
+            content: Text('Invalide input'),
+            actions: <Widget>[
+              FlatButton(
+                child: Text('Please try again!'),
+                textColor: Colors.blue,
+                onPressed: () {
+                  Navigator.of(context).pop();
                 },
               )
             ],
@@ -72,8 +105,8 @@ class _DashboardPageState extends State<DashboardPage> {
         barrierDismissible: false,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: Text('Job Done', style: TextStyle(fontSize: 15.0)),
-            content: Text('Added'),
+            title: Text('Woohuu', style: TextStyle(fontSize: 15.0)),
+            content: Text('Your post has been added!'),
             actions: <Widget>[
               FlatButton(
                 child: Text('Alright'),
@@ -101,7 +134,7 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget build(BuildContext context) {
     return new Scaffold(
         appBar: AppBar(
-          title: Text('Dashboard'),
+          title: Text('People are selling:'),
           actions: <Widget>[
             IconButton(
               icon: Icon(Icons.add),
@@ -132,7 +165,19 @@ class _DashboardPageState extends State<DashboardPage> {
         itemBuilder: (context, i) {
           return new ListTile(
             title: Text(cars.documents[i].data['title']),
-            subtitle: Text(cars.documents[i].data['details']),
+            subtitle: Text('\$' + cars.documents[i].data['price'].toString()),
+            onTap: () {
+              addDialog(context);
+                  // Navigator.of(context).pop();
+                  // crudObj.addData({
+                  //   'title': this.carModel,
+                  //   'details': this.carColor
+                  // }).then((result) {
+                  //   dialogTrigger(context);
+                  // }).catchError((e) {
+                  //   print(e);
+                  // });
+                }
           );
         },
       );
