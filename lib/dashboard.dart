@@ -73,7 +73,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   },
                 ),
                 sampleImage == null
-                    ? Text('No image selected')
+                    ? _emptyImage()
                     : _imageList()
               ],
             ),
@@ -119,6 +119,9 @@ class _DashboardPageState extends State<DashboardPage> {
                 textColor: Colors.red,
                 onPressed: () {
                   Navigator.of(context).pop();
+                  sampleImage = null;
+                  imageArr.clear();
+                  fileArr.clear();
                 },
               ),
             ],
@@ -232,10 +235,18 @@ class _DashboardPageState extends State<DashboardPage> {
         body: _carList());
   }
 
+Widget _emptyImage() {
+    return Container(
+      height: 50,
+      width: 500,
+      child: Text('No image selected'),
+    );
+    
+  }
 Widget _imageList() {
     return Container(
       height: 450,
-      width: 300,
+      width: 500,
       child: ListView.builder(
         itemCount: fileArr.length,
         padding: EdgeInsets.all(5.0),
