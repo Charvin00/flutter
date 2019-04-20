@@ -16,6 +16,7 @@ import 'package:firebase_storage/firebase_storage.dart';
 
 import 'package:path/path.dart';
 
+
 class DashboardPage extends StatefulWidget {
   @override
   _DashboardPageState createState() => _DashboardPageState();
@@ -71,7 +72,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
                 sampleImage == null
                     ? Text('No image selected')
-                    : Image.file(sampleImage, height:200.0, width:300.0)
+                    : Image.file(sampleImage, height: 200.0, width: 300.0)
               ],
             ),
             actions: <Widget>[
@@ -85,19 +86,30 @@ class _DashboardPageState extends State<DashboardPage> {
                 textColor: Colors.blue,
                 onPressed: () {
                   Navigator.of(context).pop();
-                  if (sampleImage != null) {
-                    uploadImage();
-                  }
-                  if (this.itemPrice != null || this.itemName != null || this.detail != null) {
-                    crudObj.addData({
-                      'title': this.itemName,
-                      'price': this.itemPrice,
-                      'details': this.detail,
-                      'pictures': this.imageArr
+                  if (sampleImage != null ||
+                      this.itemPrice != null ||
+                      this.itemName != null ||
+                      this.detail != null) {
+                    // crudObj.addData({
+                    //     'title': this.itemName,
+                    //     'price': this.itemPrice,
+                    //     'details': this.detail,
+                    //     'pictures': this.imageArr
+                    uploadImage().then((result) {
+                      crudObj.addData({
+                        'title': this.itemName,
+                        'price': this.itemPrice,
+                        'details': this.detail,
+                        'pictures': this.imageArr
+                      }).catchError((e) {
+                        print(e);
+                      });
                     }).then((result) {
                       dialogTrigger(context);
+                      sampleImage = null;
+                      imageArr.clear();
                     }).catchError((e) {
-                      print(e);
+                      dialogError(context);
                     });
                   } else {
                     dialogError(context);
@@ -126,6 +138,20 @@ class _DashboardPageState extends State<DashboardPage> {
 
     return "";
   }
+
+  // Future<String> uploadData(BuildContext context) async {
+  //   crudObj.addData({
+  //     'title': this.itemName,
+  //     'price': this.itemPrice,
+  //     'details': this.detail,
+  //     'pictures': this.imageArr
+  //   }).then((result) {
+  //     dialogTrigger(context);
+  //   }).catchError((e) {
+  //     print(e);
+  //   });
+  //   return "";
+  // }
 
   Future<bool> dialogError(BuildContext context) async {
     return showDialog(
