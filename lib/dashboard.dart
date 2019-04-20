@@ -27,6 +27,7 @@ class _DashboardPageState extends State<DashboardPage> {
   String itemPrice;
   String detail;
   List<String> imageArr = [];
+  List<File> fileArr = [];
 
   QuerySnapshot cars;
 
@@ -39,6 +40,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
     setState(() {
       sampleImage = tempImage;
+      fileArr.add(sampleImage);
     });
   }
 
@@ -72,7 +74,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
                 sampleImage == null
                     ? Text('No image selected')
-                    : Image.file(sampleImage, height: 200.0, width: 300.0)
+                    : _imageList()
               ],
             ),
             actions: <Widget>[
@@ -103,6 +105,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     }).then((result) {
                       sampleImage = null;
                       imageArr.clear();
+                      fileArr.clear();
                     }).catchError((e) {
                       dialogError(context);
                     });
@@ -124,12 +127,14 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Future<String> uploadImage() async {
+    for (var image in fileArr) {
     var now = new DateTime.now().toString();
     StorageReference ref = FirebaseStorage.instance.ref().child(now);
-    StorageUploadTask uploadTask = ref.putFile(sampleImage);
+    StorageUploadTask uploadTask = ref.putFile(image);
 
     var downUrl = await (await uploadTask.onComplete).ref.getDownloadURL();
     imageArr.add(downUrl);
+    }
 
     return "";
   }
@@ -170,7 +175,6 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Future<bool> dialogTrigger(BuildContext context) async {
-    print("it works");
     return showDialog(
         context: context,
         barrierDismissible: false,
@@ -226,6 +230,21 @@ class _DashboardPageState extends State<DashboardPage> {
           ],
         ),
         body: _carList());
+  }
+
+Widget _imageList() {
+    return Container(
+      height: 450,
+      width: 300,
+      child: ListView.builder(
+        itemCount: fileArr.length,
+        padding: EdgeInsets.all(5.0),
+        itemBuilder: (context, i) {
+          return new Image.file(fileArr[i], height: 200, width: 300);
+        },
+      ),
+    );
+    
   }
 
   Widget _carList() {
