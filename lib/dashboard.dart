@@ -16,7 +16,6 @@ import 'package:firebase_storage/firebase_storage.dart';
 
 import 'package:path/path.dart';
 
-
 class DashboardPage extends StatefulWidget {
   @override
   _DashboardPageState createState() => _DashboardPageState();
@@ -29,7 +28,7 @@ class _DashboardPageState extends State<DashboardPage> {
   List<String> imageArr = [];
   List<File> fileArr = [];
 
-  QuerySnapshot cars;
+  QuerySnapshot items;
 
   File sampleImage;
 
@@ -50,7 +49,7 @@ class _DashboardPageState extends State<DashboardPage> {
         barrierDismissible: false,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: Text('Add Data', style: TextStyle(fontSize: 15.0)),
+            title: Text('Add Item', style: TextStyle(fontSize: 20.0)),
             content: Column(
               children: <Widget>[
                 TextField(
@@ -72,9 +71,7 @@ class _DashboardPageState extends State<DashboardPage> {
                     this.detail = value;
                   },
                 ),
-                sampleImage == null
-                    ? _emptyImage()
-                    : _imageList()
+                sampleImage == null ? _emptyImage() : _imageList()
               ],
             ),
             actions: <Widget>[
@@ -88,9 +85,9 @@ class _DashboardPageState extends State<DashboardPage> {
                 textColor: Colors.blue,
                 onPressed: () {
                   Navigator.of(context).pop();
-                  if (sampleImage != null ||
-                      this.itemPrice != null ||
-                      this.itemName != null ||
+                  if (sampleImage != null &&
+                      this.itemPrice != null &&
+                      this.itemName != null &&
                       this.detail != null) {
                     dialogTrigger(context);
                     uploadImage().then((result) {
@@ -131,12 +128,12 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Future<String> uploadImage() async {
     for (var image in fileArr) {
-    var now = new DateTime.now().toString();
-    StorageReference ref = FirebaseStorage.instance.ref().child(now);
-    StorageUploadTask uploadTask = ref.putFile(image);
+      var now = new DateTime.now().toString();
+      StorageReference ref = FirebaseStorage.instance.ref().child(now);
+      StorageUploadTask uploadTask = ref.putFile(image);
 
-    var downUrl = await (await uploadTask.onComplete).ref.getDownloadURL();
-    imageArr.add(downUrl);
+      var downUrl = await (await uploadTask.onComplete).ref.getDownloadURL();
+      imageArr.add(downUrl);
     }
 
     return "";
@@ -202,7 +199,7 @@ class _DashboardPageState extends State<DashboardPage> {
   void initState() {
     crudObj.getData().then((results) {
       setState(() {
-        cars = results;
+        items = results;
       });
     });
     super.initState();
@@ -225,25 +222,31 @@ class _DashboardPageState extends State<DashboardPage> {
               onPressed: () {
                 crudObj.getData().then((results) {
                   setState(() {
-                    cars = results;
+                    items = results;
                   });
                 });
               },
             )
           ],
         ),
-        body: _carList());
+        body: _itemList());
   }
 
-Widget _emptyImage() {
+  Widget _emptyImage() {
     return Container(
-      height: 50,
-      width: 500,
-      child: Text('No image selected'),
-    );
-    
+        height: 50,
+        width: 500,
+        //Text('No image selected'),
+        child: PageView.builder(
+          itemBuilder: (BuildContext context, int index) {
+            return Center(
+              child: Text('No image selected'),
+            );
+          },
+        ));
   }
-Widget _imageList() {
+
+  Widget _imageList() {
     return Container(
       height: 450,
       width: 500,
@@ -255,24 +258,23 @@ Widget _imageList() {
         },
       ),
     );
-    
   }
 
-  Widget _carList() {
-    if (cars != null) {
+  Widget _itemList() {
+    if (items != null) {
       return ListView.builder(
-        itemCount: cars.documents.length,
+        itemCount: items.documents.length,
         padding: EdgeInsets.all(5.0),
         itemBuilder: (context, i) {
           return new ListTile(
             leading: SizedBox(
               height: 50.0,
               width: 50.0,
-              child: new Image.network(cars.documents[i].data['pictures'][0]),
+              child: new Image.network(items.documents[i].data['pictures'][0]),
             ),
-            title: Text(cars.documents[i].data['title']),
-            subtitle: Text('\$' + cars.documents[i].data['price'].toString()),
-            onTap: () => showDetails(context, cars.documents[i]),
+            title: Text(items.documents[i].data['title']),
+            subtitle: Text('\$' + items.documents[i].data['price'].toString()),
+            onTap: () => showDetails(context, items.documents[i]),
           );
         },
       );
@@ -327,7 +329,7 @@ Widget _imageList() {
         builder: (BuildContext context) {
           return AlertDialog(
             title:
-                Text(documents.data['title'], style: TextStyle(fontSize: 15.0)),
+                Text(documents.data['title'], style: TextStyle(fontSize: 20.0)),
             content: Column(
               children: <Widget>[
                 Stack(
@@ -336,8 +338,9 @@ Widget _imageList() {
                     _buildCircleIndicator(),
                   ],
                 ),
-                Text(documents.data['price'].toString()),
-                Text(documents.data['details'])
+                Text("The price of the item is \$" +
+                    documents.data['price'].toString()),
+                Text("Details: " + documents.data['details'])
               ],
             ),
             actions: <Widget>[
