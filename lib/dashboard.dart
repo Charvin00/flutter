@@ -90,11 +90,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       this.itemPrice != null ||
                       this.itemName != null ||
                       this.detail != null) {
-                    // crudObj.addData({
-                    //     'title': this.itemName,
-                    //     'price': this.itemPrice,
-                    //     'details': this.detail,
-                    //     'pictures': this.imageArr
+                    dialogTrigger(context);
                     uploadImage().then((result) {
                       crudObj.addData({
                         'title': this.itemName,
@@ -105,7 +101,6 @@ class _DashboardPageState extends State<DashboardPage> {
                         print(e);
                       });
                     }).then((result) {
-                      dialogTrigger(context);
                       sampleImage = null;
                       imageArr.clear();
                     }).catchError((e) {
@@ -175,6 +170,7 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Future<bool> dialogTrigger(BuildContext context) async {
+    print("it works");
     return showDialog(
         context: context,
         barrierDismissible: false,
