@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 
@@ -10,18 +10,37 @@ import 'services/crud.dart';
 
 import 'package:page_view_indicators/circle_page_indicator.dart';
 
+import 'package:image_picker/image_picker.dart';
+
+import 'package:firebase_storage/firebase_storage.dart';
+
+import 'package:path/path.dart';
+
+
 class DashboardPage extends StatefulWidget {
   @override
   _DashboardPageState createState() => _DashboardPageState();
 }
 
 class _DashboardPageState extends State<DashboardPage> {
-  String carModel;
-  String carColor;
+  String itemName;
+  String itemPrice;
+  String detail;
+  List<String> imageArr = [];
 
   QuerySnapshot cars;
 
+  File sampleImage;
+
   crudMedthods crudObj = new crudMedthods();
+
+  Future getImage() async {
+    var tempImage = await ImagePicker.pickImage(source: ImageSource.gallery);
+
+    setState(() {
+      sampleImage = tempImage;
+    });
+  }
 
   Future<bool> addDialog(BuildContext context) async {
     return showDialog(
@@ -33,39 +52,63 @@ class _DashboardPageState extends State<DashboardPage> {
             content: Column(
               children: <Widget>[
                 TextField(
-                  decoration: InputDecoration(hintText: 'Enter car Name'),
+                  decoration: InputDecoration(hintText: 'Enter item name'),
                   onChanged: (value) {
-                    this.carModel = value;
+                    this.itemName = value;
                   },
                 ),
                 SizedBox(height: 5.0),
                 TextField(
-                  decoration: InputDecoration(hintText: 'Enter car color'),
+                  decoration: InputDecoration(hintText: 'Enter item price'),
                   onChanged: (value) {
-                    this.carColor = value;
+                    this.itemPrice = value;
                   },
                 ),
+                TextField(
+                  decoration: InputDecoration(hintText: 'Enter detail'),
+                  onChanged: (value) {
+                    this.detail = value;
+                  },
+                ),
+                sampleImage == null
+                    ? Text('No image selected')
+                    : Image.file(sampleImage, height: 200.0, width: 300.0)
               ],
             ),
             actions: <Widget>[
+              FloatingActionButton(
+                onPressed: getImage,
+                tooltip: 'Add Image',
+                child: new Icon(Icons.add),
+              ),
               FlatButton(
                 child: Text('Add'),
                 textColor: Colors.blue,
                 onPressed: () {
                   Navigator.of(context).pop();
-                  if(this.carColor != null || this.carModel != null) {
-                    crudObj.addData({
-                    'title': this.carModel,
-                    'price': this.carColor
+                  if (sampleImage != null ||
+                      this.itemPrice != null ||
+                      this.itemName != null ||
+                      this.detail != null) {
+                    dialogTrigger(context);
+                    uploadImage().then((result) {
+                      crudObj.addData({
+                        'title': this.itemName,
+                        'price': this.itemPrice,
+                        'details': this.detail,
+                        'pictures': this.imageArr
+                      }).catchError((e) {
+                        print(e);
+                      });
                     }).then((result) {
-                      dialogTrigger(context);
+                      sampleImage = null;
+                      imageArr.clear();
                     }).catchError((e) {
-                      print(e);
+                      dialogError(context);
                     });
                   } else {
-                      dialogError(context);
+                    dialogError(context);
                   }
-                  
                 },
               ),
               FlatButton(
@@ -73,14 +116,39 @@ class _DashboardPageState extends State<DashboardPage> {
                 textColor: Colors.red,
                 onPressed: () {
                   Navigator.of(context).pop();
-                  
                 },
               ),
             ],
           );
         });
   }
-Future<bool> dialogError(BuildContext context) async {
+
+  Future<String> uploadImage() async {
+    var now = new DateTime.now().toString();
+    StorageReference ref = FirebaseStorage.instance.ref().child(now);
+    StorageUploadTask uploadTask = ref.putFile(sampleImage);
+
+    var downUrl = await (await uploadTask.onComplete).ref.getDownloadURL();
+    imageArr.add(downUrl);
+
+    return "";
+  }
+
+  // Future<String> uploadData(BuildContext context) async {
+  //   crudObj.addData({
+  //     'title': this.itemName,
+  //     'price': this.itemPrice,
+  //     'details': this.detail,
+  //     'pictures': this.imageArr
+  //   }).then((result) {
+  //     dialogTrigger(context);
+  //   }).catchError((e) {
+  //     print(e);
+  //   });
+  //   return "";
+  // }
+
+  Future<bool> dialogError(BuildContext context) async {
     return showDialog(
         context: context,
         barrierDismissible: false,
@@ -102,6 +170,7 @@ Future<bool> dialogError(BuildContext context) async {
   }
 
   Future<bool> dialogTrigger(BuildContext context) async {
+    print("it works");
     return showDialog(
         context: context,
         barrierDismissible: false,
@@ -151,7 +220,7 @@ Future<bool> dialogError(BuildContext context) async {
                   setState(() {
                     cars = results;
                   });
-                });         
+                });
               },
             )
           ],
@@ -166,11 +235,11 @@ Future<bool> dialogError(BuildContext context) async {
         padding: EdgeInsets.all(5.0),
         itemBuilder: (context, i) {
           return new ListTile(
-              leading:SizedBox(
-                height: 50.0,
-                width: 50.0,
-                child: new Image.network(cars.documents[i].data['pictures'][0]),
-              ),
+            leading: SizedBox(
+              height: 50.0,
+              width: 50.0,
+              child: new Image.network(cars.documents[i].data['pictures'][0]),
+            ),
             title: Text(cars.documents[i].data['title']),
             subtitle: Text('\$' + cars.documents[i].data['price'].toString()),
             onTap: () => showDetails(context, cars.documents[i]),
@@ -182,50 +251,53 @@ Future<bool> dialogError(BuildContext context) async {
     }
   }
 
-    Future<bool> showDetails(BuildContext context, DocumentSnapshot documents) async {
-      final _items = documents.data['pictures'];
-      final _currentPageNotifier = ValueNotifier<int>(0);
-      final _pageController = PageController();
+  Future<bool> showDetails(
+      BuildContext context, DocumentSnapshot documents) async {
+    final _items = documents.data['pictures'];
+    final _currentPageNotifier = ValueNotifier<int>(0);
+    final _pageController = PageController();
 
-       _buildPageView() {
-          return Container(
-            height: 300.0, // Change as per your requirement
-            width: 300.0, // Change as per your requirement
-            child: PageView.builder(
-              itemCount: _items.length,
-              controller: _pageController,
-              itemBuilder: (BuildContext context, int index) {
-                return Center(
-                  child: Image.network(_items[index]),
-                );
-              },
-              onPageChanged: (int index) {
-                _currentPageNotifier.value = index;
-              },
-            ),
-          );
-        }
-      _buildCircleIndicator() {
-        return Positioned(
-          left: 0.0,
-          right: 0.0,
-          bottom: 0.0,
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: CirclePageIndicator(
-              itemCount: _items.length,
-              currentPageNotifier: _currentPageNotifier,
-            ),
+    _buildPageView() {
+      return Container(
+        height: 300.0, // Change as per your requirement
+        width: 300.0, // Change as per your requirement
+        child: PageView.builder(
+          itemCount: _items.length,
+          controller: _pageController,
+          itemBuilder: (BuildContext context, int index) {
+            return Center(
+              child: Image.network(_items[index]),
+            );
+          },
+          onPageChanged: (int index) {
+            _currentPageNotifier.value = index;
+          },
+        ),
+      );
+    }
+
+    _buildCircleIndicator() {
+      return Positioned(
+        left: 0.0,
+        right: 0.0,
+        bottom: 0.0,
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: CirclePageIndicator(
+            itemCount: _items.length,
+            currentPageNotifier: _currentPageNotifier,
           ),
-        );
-      }
+        ),
+      );
+    }
 
     return showDialog(
         context: context,
         barrierDismissible: false,
         builder: (BuildContext context) {
           return AlertDialog(
-            title: Text(documents.data['title'], style: TextStyle(fontSize: 15.0)),
+            title:
+                Text(documents.data['title'], style: TextStyle(fontSize: 15.0)),
             content: Column(
               children: <Widget>[
                 Stack(
