@@ -14,8 +14,6 @@ import 'package:image_picker/image_picker.dart';
 
 import 'package:firebase_storage/firebase_storage.dart';
 
-import 'package:path/path.dart';
-
 class DashboardPage extends StatefulWidget {
   @override
   _DashboardPageState createState() => _DashboardPageState();
@@ -25,24 +23,27 @@ class _DashboardPageState extends State<DashboardPage> {
   String itemName;
   String itemPrice;
   String detail;
-  List<String> imageArr = [];
-  List<File> fileArr = [];
+  List<String> imageArr = []; // array of images download url from firstore
+  List<File> fileArr = []; // array of images files from image picker
 
-  QuerySnapshot items;
+  QuerySnapshot items; // collection of firebase instances data
 
-  File sampleImage;
+  File sampleImage; // current image file from image picker
 
-  crudMedthods crudObj = new crudMedthods();
+  CrudMedthods crudObj = new CrudMedthods();  // crud of firebase
 
+// get image from image picker, to use camera, just change `ImageSource` to `camera`
   Future getImage() async {
     var tempImage = await ImagePicker.pickImage(source: ImageSource.gallery);
 
+// once we get the desired image, add it to the image array
     setState(() {
       sampleImage = tempImage;
       fileArr.add(sampleImage);
     });
   }
 
+// pop form to add new post
   Future<bool> addDialog(BuildContext context) async {
     return showDialog(
         context: context,
@@ -71,26 +72,37 @@ class _DashboardPageState extends State<DashboardPage> {
                     this.detail = value;
                   },
                 ),
+                // if no image selected, show a text message(no image selected)
+                // else shows a list view of all the selected images
                 sampleImage == null ? _emptyImage() : _imageList()
               ],
             ),
+            // buttons
             actions: <Widget>[
+              // pick image from image source
               FloatingActionButton(
                 onPressed: getImage,
                 tooltip: 'Add Image',
                 child: new Icon(Icons.add),
               ),
+              // submit: 1. upload images to firestore; 
+              //         2. upload item data(title, price, details, pictures[images url]) to firebase
+              //         3. reset form
               FlatButton(
                 child: Text('Add'),
                 textColor: Colors.blue,
                 onPressed: () {
+                  // disappear pop form
                   Navigator.of(context).pop();
+                  // user input validation
                   if (sampleImage != null &&
                       this.itemPrice != null &&
                       this.itemName != null &&
                       this.detail != null) {
                     dialogTrigger(context);
+                    // step 1
                     uploadImage().then((result) {
+                      // step 2
                       crudObj.addData({
                         'title': this.itemName,
                         'price': this.itemPrice,
@@ -100,17 +112,19 @@ class _DashboardPageState extends State<DashboardPage> {
                         print(e);
                       });
                     }).then((result) {
+                      // step 3
                       sampleImage = null;
                       imageArr.clear();
                       fileArr.clear();
                     }).catchError((e) {
                       dialogError(context);
                     });
-                  } else {
+                  } else { // handle invalid input
                     dialogError(context);
                   }
                 },
               ),
+              // cancel and reset form
               FlatButton(
                 child: Text('Cancel'),
                 textColor: Colors.red,
@@ -126,6 +140,38 @@ class _DashboardPageState extends State<DashboardPage> {
         });
   }
 
+// widget to show no image selected
+  Widget _emptyImage() {
+    return Container(
+        height: 50,
+        width: 500,
+        //Text('No image selected'),
+        child: PageView.builder(
+          itemBuilder: (BuildContext context, int index) {
+            return Center(
+              child: Text('No image selected'),
+            );
+          },
+        ));
+  }
+
+// wideget to show a list view of selected images
+  Widget _imageList() {
+    return Container(
+      height: 450,
+      width: 500,
+      child: ListView.builder(
+        itemCount: fileArr.length,
+        padding: EdgeInsets.all(5.0),
+        itemBuilder: (context, i) {
+          return new Image.file(fileArr[i], height: 200, width: 300);
+        },
+      ),
+    );
+  }
+
+
+// upload all images files to firebase
   Future<String> uploadImage() async {
     for (var image in fileArr) {
       var now = new DateTime.now().toString();
@@ -139,20 +185,7 @@ class _DashboardPageState extends State<DashboardPage> {
     return "";
   }
 
-  // Future<String> uploadData(BuildContext context) async {
-  //   crudObj.addData({
-  //     'title': this.itemName,
-  //     'price': this.itemPrice,
-  //     'details': this.detail,
-  //     'pictures': this.imageArr
-  //   }).then((result) {
-  //     dialogTrigger(context);
-  //   }).catchError((e) {
-  //     print(e);
-  //   });
-  //   return "";
-  // }
-
+// invalide input alert
   Future<bool> dialogError(BuildContext context) async {
     return showDialog(
         context: context,
@@ -174,6 +207,7 @@ class _DashboardPageState extends State<DashboardPage> {
         });
   }
 
+// successful submission alert
   Future<bool> dialogTrigger(BuildContext context) async {
     return showDialog(
         context: context,
@@ -195,6 +229,7 @@ class _DashboardPageState extends State<DashboardPage> {
         });
   }
 
+// use the data fethed from firebase to initialize state
   @override
   void initState() {
     crudObj.getData().then((results) {
@@ -232,34 +267,7 @@ class _DashboardPageState extends State<DashboardPage> {
         body: _itemList());
   }
 
-  Widget _emptyImage() {
-    return Container(
-        height: 50,
-        width: 500,
-        //Text('No image selected'),
-        child: PageView.builder(
-          itemBuilder: (BuildContext context, int index) {
-            return Center(
-              child: Text('No image selected'),
-            );
-          },
-        ));
-  }
-
-  Widget _imageList() {
-    return Container(
-      height: 450,
-      width: 500,
-      child: ListView.builder(
-        itemCount: fileArr.length,
-        padding: EdgeInsets.all(5.0),
-        itemBuilder: (context, i) {
-          return new Image.file(fileArr[i], height: 200, width: 300);
-        },
-      ),
-    );
-  }
-
+// widget of list view for all posts in firebase
   Widget _itemList() {
     if (items != null) {
       return ListView.builder(
@@ -274,6 +282,7 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
             title: Text(items.documents[i].data['title']),
             subtitle: Text('\$' + items.documents[i].data['price'].toString()),
+            // once tappped, shows details info of the selected post
             onTap: () => showDetails(context, items.documents[i]),
           );
         },
@@ -283,6 +292,7 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
+// detail pop page of one existing post
   Future<bool> showDetails(
       BuildContext context, DocumentSnapshot documents) async {
     final _items = documents.data['pictures'];
@@ -293,6 +303,7 @@ class _DashboardPageState extends State<DashboardPage> {
       return Container(
         height: 300.0, // Change as per your requirement
         width: 300.0, // Change as per your requirement
+        // multi images in page view 
         child: PageView.builder(
           itemCount: _items.length,
           controller: _pageController,
@@ -308,6 +319,7 @@ class _DashboardPageState extends State<DashboardPage> {
       );
     }
 
+// indicators for images in page view
     _buildCircleIndicator() {
       return Positioned(
         left: 0.0,
@@ -332,6 +344,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 Text(documents.data['title'], style: TextStyle(fontSize: 20.0)),
             content: Column(
               children: <Widget>[
+                // stack up multi images in page view with indicator flow above
                 Stack(
                   children: <Widget>[
                     _buildPageView(),

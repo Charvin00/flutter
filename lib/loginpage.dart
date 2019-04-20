@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 
-//Firebase Auth
+//Firebase Auth, dummy account: test@gmail.com | password: 123321
 import 'package:firebase_auth/firebase_auth.dart';
 
 class LoginPage extends StatefulWidget {
   @override
   _LoginPageState createState() => _LoginPageState();
 }
-
+//login page, take user email and password inputs
 class _LoginPageState extends State<LoginPage> {
   String email;
   String password;
-
+//authentication widges
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -42,7 +42,7 @@ class _LoginPageState extends State<LoginPage> {
                     .then((signedInUser) {
                   Navigator.of(context).pushReplacementNamed('/homepage');
                 }).catchError((e) {
-                  print(e);
+                  print(e); // print error if wrong input
                 });
               },
               textColor: Colors.white,
