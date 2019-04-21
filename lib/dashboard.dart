@@ -20,6 +20,7 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> {
+  
   String itemName;
   String itemPrice;
   String detail;
@@ -243,8 +244,10 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   Widget build(BuildContext context) {
     return new Scaffold(
+      key: _scaffoldKey,
         appBar: AppBar(
           title: Text('People are selling:'),
+          
           actions: <Widget>[
             IconButton(
               icon: Icon(Icons.add),
@@ -260,12 +263,30 @@ class _DashboardPageState extends State<DashboardPage> {
                     items = results;
                   });
                 });
+                _showSnackBar();
               },
+              
             )
           ],
         ),
         body: _itemList());
   }
+
+  // adding snack bar for refreshing action after refresh button was clicked
+   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
+    _showSnackBar() {
+      print("Show Snackbar here !");
+      final snackBar = new SnackBar(
+          content: new Text("Refreshing" , style: TextStyle(fontSize: 20.0), textAlign: TextAlign.center),
+          duration: new Duration(seconds: 5),
+          backgroundColor: Colors.blue,
+          // action: new SnackBarAction(label: 'Ok', onPressed: (){
+          //   print('press Ok on SnackBar');
+          // }),
+      );
+      //How to display Snackbar ?
+      _scaffoldKey.currentState.showSnackBar(snackBar);
+    }
 
 // widget of list view for all posts in firebase
   Widget _itemList() {
