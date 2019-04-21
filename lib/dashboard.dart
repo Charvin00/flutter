@@ -278,7 +278,7 @@ class _DashboardPageState extends State<DashboardPage> {
       print("Show Snackbar here !");
       final snackBar = new SnackBar(
           content: new Text("Refreshing" , style: TextStyle(fontSize: 20.0), textAlign: TextAlign.center),
-          duration: new Duration(seconds: 3),
+          duration: new Duration(seconds: 5),
           backgroundColor: Colors.blue,
           // action: new SnackBarAction(label: 'Ok', onPressed: (){
           //   print('press Ok on SnackBar');
