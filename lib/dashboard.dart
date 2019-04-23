@@ -21,9 +21,9 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   
-  String itemName;
-  String itemPrice;
-  String detail;
+  String itemName = '';
+  String itemPrice = '';
+  String detail = '';
   List<String> imageArr = []; // array of images download url from firstore
   List<File> fileArr = []; // array of images files from image picker
 
@@ -97,9 +97,9 @@ class _DashboardPageState extends State<DashboardPage> {
                   Navigator.of(context).pop();
                   // user input validation
                   if (sampleImage != null &&
-                      this.itemPrice != null &&
-                      this.itemName != null &&
-                      this.detail != null) {
+                      this.itemPrice != '' &&
+                      this.itemName != '' &&
+                      this.detail != '' ) {
                     dialogTrigger(context);
                     // step 1
                     uploadImage().then((result) {
@@ -114,6 +114,9 @@ class _DashboardPageState extends State<DashboardPage> {
                       });
                     }).then((result) {
                       // step 3
+                      this.itemName = null;
+                      this.itemPrice = null;
+                      this.detail = null;
                       sampleImage = null;
                       imageArr.clear();
                       fileArr.clear();
